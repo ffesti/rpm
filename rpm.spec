@@ -18,7 +18,6 @@
 %define rpmhome /usr/lib/rpm
 
 %define rpmver 4.13.0
-%define snapver rc1
 %define srcver %{rpmver}%{?snapver:-%{snapver}}
 %define eggver %{rpmver}%{?snapver:_%{snapver}}
 
@@ -29,7 +28,7 @@
 Summary: The RPM package management system
 Name: rpm
 Version: %{rpmver}
-Release: %{?snapver:0.%{snapver}.}1%{?dist}
+Release: %{?wzer:0}
 Group: System Environment/Base
 Url: http://www.rpm.org/
 Source0: http://rpm.org/releases/rpm-4.12.x/%{name}-%{srcver}.tar.bz2
@@ -272,7 +271,7 @@ Requires: rpm-libs%{_isa} = %{version}-%{release}
 %endif
 
 %prep
-%autosetup -n %{name}-%{srcver} %{?with_int_bdb:-a 1} -p1
+%autosetup -n %{name}-%{release} %{?with_int_bdb:-a 1} -p1
 
 %if %{with int_bdb}
 ln -s db-%{bdbver} db
