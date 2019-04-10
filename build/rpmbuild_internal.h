@@ -505,6 +505,26 @@ rpmRC checkForEncoding(Header h, int addtag);
 RPM_GNUC_INTERNAL
 void copyInheritedTags(Header h, Header fromh);
 
+/** \ingroup rpmbuild
+ * Destroy source component chain.
+ * @param s		source component chain
+ * @return		NULL always
+ */
+RPM_GNUC_INTERNAL
+inline
+struct Source * freeSources(struct Source * s)
+{
+    struct Source *r, *t = s;
+
+    while (t != NULL) {
+	r = t;
+	t = t->next;
+	r->fullSource = _free(r->fullSource);
+	free(r);
+    }
+    return NULL;
+}
+
 #ifdef __cplusplus
 }
 #endif

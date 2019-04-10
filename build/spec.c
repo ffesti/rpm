@@ -43,25 +43,6 @@ struct TriggerFileEntry * freeTriggerFiles(struct TriggerFileEntry * p)
     return NULL;
 }
 
-/**
- * Destroy source component chain.
- * @param s		source component chain
- * @return		NULL always
- */
-static inline
-struct Source * freeSources(struct Source * s)
-{
-    struct Source *r, *t = s;
-
-    while (t != NULL) {
-	r = t;
-	t = t->next;
-	r->fullSource = _free(r->fullSource);
-	free(r);
-    }
-    return NULL;
-}
-
 rpmRC lookupPackage(rpmSpec spec, const char *name, int flag,Package *pkg)
 {
     char *fullName = NULL;

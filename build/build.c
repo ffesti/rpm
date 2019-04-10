@@ -373,12 +373,7 @@ static rpmRC buildSpec(BTA_t buildArgs, rpmSpec spec, int what)
 		rasprintf(&spec->sourceRpmName, "%s.buildreqs.rpm", nvr);
 		free(nvr);
 		/* free sources to not include them in the buildreqs package */
-		while (spec->sources) {
-		    struct Source *t = spec->sources;
-		    spec->sources = t->next;
-		    _free(t->fullSource);
-		    free(t);
-		}
+		spec->sources = freeSources(spec->sources);
 		spec->numSources = 0;
 		missing_buildreqs = 1;
 		what = RPMBUILD_PACKAGESOURCE;
