@@ -462,6 +462,23 @@ In simple packages `%prep` is often just:
 %autosetup
 ```
 
+### %generate_buildrequires
+
+This optional script can be used to determine `BuildRequires`
+during the build. If present it is executed after %prep and can though
+access the unpacked and patched sources. The script must print the found build
+dependencies to stdout in the same syntax as used after
+`BuildRequires:` preamble tag one dependency per line.
+
+`rpmbuild` will then check if the dependencies are met before
+continuing the build. If some dependencies are missing a package with
+the `.buildreqs.nosrc.rpm` postfix is created, that - as the name
+suggests - contains the found build requires but no sources. It can be
+used to install the build requires and restart the build.
+
+On success the found build dependencies are also added to the source
+package as `Requires`.
+
 ### %build
 
 In %build, the unpacked sources are compiled to binaries.
