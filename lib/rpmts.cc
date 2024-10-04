@@ -288,8 +288,6 @@ static int loadKeyringFromFiles(rpmts ts)
     }
 
     for (char **f = files; *f; f++) {
-	int subkeysCount, i;
-	rpmPubkey *subkeys;
 	rpmPubkey key = rpmPubkeyRead(*f);
 
 	if (!key) {
@@ -300,22 +298,7 @@ static int loadKeyringFromFiles(rpmts ts)
 	    nkeys++;
 	    rpmlog(RPMLOG_DEBUG, "added key %s to keyring\n", *f);
 	}
-	subkeys = rpmGetSubkeys(key, &subkeysCount);
 	rpmPubkeyFree(key);
-
-	for (i = 0; i < subkeysCount; i++) {
-	    rpmPubkey subkey = subkeys[i];
-
-	    if (rpmKeyringAddKey(ts->keyring, subkey) == 0) {
-		rpmlog(RPMLOG_DEBUG,
-		    "added subkey %d of main key %s to keyring\n",
-		    i, *f);
-
-		nkeys++;
-	    }
-	    rpmPubkeyFree(subkey);
-	}
-	free(subkeys);
     }
 exit:
     free(pkpath);
@@ -344,8 +327,6 @@ static int loadKeyringFromDB(rpmts ts)
 
 	    if (rpmBase64Decode(key, (void **) &pkt, &pktlen) == 0) {
 		rpmPubkey key = rpmPubkeyNew(pkt, pktlen);
-		int subkeysCount, i;
-		rpmPubkey *subkeys = rpmGetSubkeys(key, &subkeysCount);
 
 		if (rpmKeyringAddKey(ts->keyring, key) == 0) {
 		    char *nvr = headerGetAsString(h, RPMTAG_NVR);
@@ -354,22 +335,6 @@ static int loadKeyringFromDB(rpmts ts)
 		    nkeys++;
 		}
 		rpmPubkeyFree(key);
-
-		for (i = 0; i < subkeysCount; i++) {
-		    rpmPubkey subkey = subkeys[i];
-
-		    if (rpmKeyringAddKey(ts->keyring, subkey) == 0) {
-			char *nvr = headerGetAsString(h, RPMTAG_NVR);
-			rpmlog(RPMLOG_DEBUG,
-			    "added subkey %d of main key %s to keyring\n",
-			    i, nvr);
-
-			free(nvr);
-			nkeys++;
-		    }
-		    rpmPubkeyFree(subkey);
-		}
-		free(subkeys);
 		free(pkt);
 	    }
 	}
@@ -711,8 +676,6 @@ rpmRC rpmtsImportPubkey(const rpmts ts, const unsigned char * pkt, size_t pktlen
     krc = rpmKeyringModify(keyring, pubkey, oldkey ? RPMKEYRING_REPLACE : RPMKEYRING_ADD);
     if (krc < 0)
 	goto exit;
-    for (i = 0; i < subkeysCount; i++)
-	rpmKeyringModify(keyring, subkeys[i], oldkey ? RPMKEYRING_REPLACE : RPMKEYRING_ADD);
 
     /* If we dont already have the key, make a persistent record of it */
     if (krc == 0) {

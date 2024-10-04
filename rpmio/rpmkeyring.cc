@@ -73,16 +73,30 @@ int rpmKeyringModify(rpmKeyring keyring, rpmPubkey key, rpmKeyringModifyMode mod
     /* check if we already have this key, but always wrlock for simplicity */
     wrlock lock(keyring->mutex);
     auto item = keyring->keys.find(key->keyid);
-    if (item != keyring->keys.end() && mode == RPMKEYRING_DELETE) {
+    if (item != keyring->keys.end() && (mode == RPMKEYRING_DELETE || mode == RPMKEYRING_REPLACE)) {
+	/* remove subkeys first */
+	if (key->subkeys) {
+	    rdlock sklock(key->subkeys->mutex);
+            for (auto i : key->subkeys->keys) {
+		auto skitem = keyring->keys.find(i.second->keyid);
+		if (skitem != keyring->keys.end()) {
+		    rpmPubkeyFree(skitem->second);
+		    keyring->keys.erase(skitem);
+		}
+	    }
+	}
 	rpmPubkeyFree(item->second);
 	keyring->keys.erase(item);
 	rc = 0;
-    } else if (item != keyring->keys.end() && mode == RPMKEYRING_REPLACE) {
-	rpmPubkeyFree(item->second);
-	item->second = rpmPubkeyLink(key);
-	rc = 0;
-    } else if (item == keyring->keys.end() && (mode == RPMKEYRING_ADD ||mode == RPMKEYRING_REPLACE) ) {
+    }
+    if ((item == keyring->keys.end() && mode == RPMKEYRING_ADD) || mode == RPMKEYRING_REPLACE) {
 	keyring->keys.insert({key->keyid, rpmPubkeyLink(key)});
+	if (key->subkeys) {
+	    rdlock sklock(key->subkeys->mutex);
+	    for (auto i : key->subkeys->keys) {
+		keyring->keys.insert({i.first, rpmPubkeyLink(i.second)});
+	    }
+	}
 	rc = 0;
     }
 
