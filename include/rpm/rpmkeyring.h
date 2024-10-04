@@ -48,6 +48,34 @@ rpmKeyring rpmKeyringFree(rpmKeyring keyring);
 int rpmKeyringAddKey(rpmKeyring keyring, rpmPubkey key);
 
 /** \ingroup rpmkeyring
+ * Get iterator for all the primary keys in the keyring
+ * @param keyring       keyring handle
+ * @return		iterator or NULL
+ */
+rpmKeyringIterator rpmKeyringGetIterator(rpmKeyring keyring);
+
+/** \ingroup rpmkeyring
+ * Reference a keyring iterator.
+ * @param iterator	iterator handle
+ * @return		new iterator reference
+ */
+rpmKeyringIterator rpmKeyringIteratorLink(rpmKeyringIterator iterator);
+
+/** \ingroup rpmkeyring
+ * Get next key in keyring
+ * @param iterator	iterator handle
+ * @return		next public key or NULL if end is reached
+ */
+rpmPubkey rpmKeyringIteratorNext(rpmKeyringIterator iterator);
+
+/** \ingroup rpmkeyring
+ * Free iterator
+ * @param iterator	iterator handle
+ * @return		NULL
+ */
+rpmKeyringIterator rpmKeyringIteratorFree(rpmKeyringIterator iterator);
+
+/** \ingroup rpmkeyring
  * Perform combined keyring lookup and signature verification
  * @param keyring	keyring handle
  * @param sig		OpenPGP signature parameters

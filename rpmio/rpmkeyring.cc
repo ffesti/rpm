@@ -36,6 +36,19 @@ struct rpmKeyring_s {
     std::shared_mutex mutex;
 };
 
+typedef enum rpmKeyringInteratorFilterMode_e {
+    RPMKEYRINGFILTERNONE    = 0,
+    RPMKEYRINGFILTERSUBKEYS = 1,
+} rpmKeyringIteratorFilterMode;
+
+struct rpmKeyringIterator_s {
+    rpmKeyring keyring;
+    std::map<std::string,rpmPubkey>::const_iterator iterator;
+    rpmKeyringIteratorFilterMode filter;
+    int nrefs;
+    std::shared_mutex mutex;
+};
+
 static std::string key2str(const uint8_t *keyid)
 {
     return std::string(reinterpret_cast<const char *>(keyid), PGP_KEYID_LEN);
@@ -61,6 +74,66 @@ rpmKeyring rpmKeyringFree(rpmKeyring keyring)
     }
     return NULL;
 }
+
+rpmKeyringIterator rpmKeyringGetIterator(rpmKeyring keyring)
+{
+    if (!keyring)
+	return NULL;
+
+    keyring = rpmKeyringLink(keyring);
+    rdlock lock(keyring->mutex);
+
+    rpmKeyringIterator iter = new rpmKeyringIterator_s {};
+    iter->iterator = keyring->keys.cbegin();
+    iter->keyring = keyring;
+    iter->nrefs = 1;
+    iter->filter = RPMKEYRINGFILTERSUBKEYS;
+    return iter;
+}
+
+rpmPubkey rpmKeyringIteratorNext(rpmKeyringIterator iterator)
+{
+    rpmPubkey next = NULL;
+
+    if (!iterator)
+	return NULL;
+
+    wrlock ilock(iterator->mutex);
+    rdlock klock(iterator->keyring->mutex);
+
+    while (iterator->iterator != iterator->keyring->keys.end()) {
+	next = iterator->iterator->second;
+	iterator->iterator++;
+	rdlock lock(next->mutex);
+	if (iterator->filter == RPMKEYRINGFILTERNONE || !next->primarykey)
+	    break;
+    }
+    return rpmPubkeyLink(next);
+}
+
+rpmKeyringIterator rpmKeyringIteratorLink(rpmKeyringIterator iterator)
+{
+    if (iterator) {
+	wrlock lock(iterator->mutex);
+	iterator->nrefs++;
+    }
+
+    return iterator;
+}
+
+rpmKeyringIterator rpmKeyringIteratorFree(rpmKeyringIterator iterator)
+{
+    if (!iterator)
+	return NULL;
+
+    wrlock lock(iterator->mutex);
+    if (--iterator->nrefs == 0) {
+	rpmKeyringFree(iterator->keyring);
+	delete iterator;
+    }
+    return NULL;
+}
+
 
 int rpmKeyringModify(rpmKeyring keyring, rpmPubkey key, rpmKeyringModifyMode mode)
 {
