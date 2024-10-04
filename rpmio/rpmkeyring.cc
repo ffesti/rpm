@@ -21,6 +21,7 @@ struct rpmPubkey_s {
     std::vector<uint8_t> pkt;
     std::string keyid;
     rpmPubkey primarykey;
+    rpmKeyring subkeys;
     pgpDigParams pgpkey;
     int nrefs;
     std::shared_mutex mutex;
@@ -133,6 +134,8 @@ rpmPubkey rpmPubkeyNew(const uint8_t *pkt, size_t pktlen)
     rpmPubkey key = NULL;
     pgpDigParams pgpkey = NULL;
     pgpKeyID_t keyid;
+    int i, subkeysCount = 0;
+    rpmPubkey *subkeys = NULL;
     
     if (pkt == NULL || pktlen == 0)
 	goto exit;
@@ -143,13 +146,27 @@ rpmPubkey rpmPubkeyNew(const uint8_t *pkt, size_t pktlen)
     if (pgpPrtParams(pkt, pktlen, PGPTAG_PUBLIC_KEY, &pgpkey))
 	goto exit;
 
+
     key = new rpmPubkey_s {};
     key->primarykey = NULL;
+    key->subkeys = NULL;
     key->pkt.resize(pktlen);
     key->pgpkey = pgpkey;
     key->nrefs = 1;
     memcpy(key->pkt.data(), pkt, pktlen);
     key->keyid = key2str(keyid);
+
+    subkeys = rpmGetSubkeys(key, &subkeysCount);
+
+    if (subkeysCount)
+	key->subkeys = rpmKeyringNew();
+
+    for (i=0; i < subkeysCount; i++) {
+	rpmKeyringAddKey(key->subkeys, subkeys[i]);
+	rpmPubkeyFree(subkeys[i]);
+    }
+
+    free(subkeys);
 
 exit:
     return key;
@@ -185,7 +202,7 @@ rpmPubkey *rpmGetSubkeys(rpmPubkey primarykey, int *count)
 	subkeys = (rpmPubkey *)xmalloc(pgpsubkeysCount * sizeof(*subkeys));
 	for (i = 0; i < pgpsubkeysCount; i++) {
 	    subkeys[i] = rpmPubkeyNewSubkey(primarykey, pgpsubkeys[i]);
-	    primarykey = pubkeyLink(primarykey);
+	    primarykey = primarykey;
 	}
 	free(pgpsubkeys);
     }
@@ -242,7 +259,7 @@ rpmPubkey rpmPubkeyFree(rpmPubkey key)
     wrlock lock(key->mutex);
     if (--key->nrefs == 0) {
 	pgpDigParamsFree(key->pgpkey);
-	rpmPubkeyFree(key->primarykey);
+	rpmKeyringFree(key->subkeys);
 	delete key;
     }
     return NULL;
