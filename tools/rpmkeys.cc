@@ -116,6 +116,28 @@ static int printKey(rpmPubkey key, void * data)
     return 0;
 }
 
+static int printKeyLong(rpmPubkey key, void * data)
+{
+    char * fp = rpmPubkeyFingerprintAsHex(key);
+    char * keyid = rpmPubkeyKeyIDAsHex(key);
+    pgpDigParams params = rpmPubkeyPgpDigParams(key);
+    const time_t unixtime = pgpDigParamsCreationTime(params);
+    rpmlog(RPMLOG_NOTICE, "Public key\n");
+    rpmlog(RPMLOG_NOTICE, "Issuer:         %s\n", pgpDigParamsUserID(params));
+    rpmlog(RPMLOG_NOTICE, "Fingerprint:    %s\n", fp);
+    rpmlog(RPMLOG_NOTICE, "Key ID:         %s\n", keyid);
+    rpmlog(RPMLOG_NOTICE, "Creation Time:  %s", asctime(gmtime(&unixtime)));
+    rpmlog(RPMLOG_NOTICE, "Version:        V%i\n", pgpDigParamsVersion(params));
+    rpmlog(RPMLOG_NOTICE, "Key algorithm:  %s\n", pgpValString(PGPVAL_PUBKEYALGO, pgpDigParamsAlgo(params, PGPVAL_PUBKEYALGO)));
+    
+    rpmlog(RPMLOG_NOTICE, "Hash algorithm: %s\n", pgpValString(PGPVAL_HASHALGO, pgpDigParamsAlgo(params, PGPVAL_HASHALGO)));
+    rpmlog(RPMLOG_NOTICE, "\n");
+    free(fp);
+    free(keyid);
+    return 0;
+
+}
+
 int main(int argc, char *argv[])
 {
     int ec = EXIT_FAILURE;
@@ -159,7 +181,10 @@ int main(int argc, char *argv[])
     }
     case MODE_LISTKEY:
     {
-	ec = matchingKeys(keyring, args, NULL, printKey);
+	if (rpmIsVerbose())
+	    ec = matchingKeys(keyring, args, NULL, printKeyLong);
+	else
+	    ec = matchingKeys(keyring, args, NULL, printKey);
 	break;
     }
     default:

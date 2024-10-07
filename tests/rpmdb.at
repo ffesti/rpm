@@ -130,6 +130,22 @@ runroot rpmkeys --list 4344591e1964c5fc
 ],
 [])
 
+RPMTEST_CHECK([
+runroot rpmkeys -v --list 4344591e1964c5fc
+],
+[0],
+[Public key
+Issuer:         rpm.org RSA testkey <rsa@rpm.org>
+Fingerprint:    771b18d3d7baa28734333c424344591e1964c5fc
+Key ID:         4344591e1964c5fc
+Creation Time:  Thu Apr  6 12:48:24 2017
+Version:        V4
+Key algorithm:  RSA
+Hash algorithm: SHA256
+
+],
+[])
+
 
 RPMTEST_CHECK([
 runroot rpmkeys --list XXX
