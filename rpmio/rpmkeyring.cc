@@ -283,7 +283,12 @@ rpmPubkey *rpmGetSubkeys(rpmPubkey primarykey, int *count)
     int pgpsubkeysCount = 0;
     int i;
 
-    if (primarykey && !pgpPrtParamsSubkeys(primarykey->pkt.data(), primarykey->pkt.size(),
+    if (!primarykey)
+	return NULL;
+
+    rdlock lock(primarykey->mutex);
+
+    if (!pgpPrtParamsSubkeys(primarykey->pkt.data(), primarykey->pkt.size(),
 	    primarykey->pgpkey, &pgpsubkeys, &pgpsubkeysCount)) {
 	/* Returned to C, can't use new */
 	subkeys = (rpmPubkey *)xmalloc(pgpsubkeysCount * sizeof(*subkeys));
