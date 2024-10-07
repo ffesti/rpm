@@ -110,23 +110,32 @@ RPMTEST_CHECK([
 runroot rpmkeys --list
 ],
 [0],
-[1964c5fc-58e63918: rpm.org RSA testkey <rsa@rpm.org> public key
+[771b18d3d7baa28734333c424344591e1964c5fc rpm.org RSA testkey <rsa@rpm.org> public key
 ],
 [])
 
 RPMTEST_CHECK([
-runroot rpmkeys --list 1964c5fc
+runroot rpmkeys --list 771b18d3d7baa28734333c424344591e1964c5fc
 ],
 [0],
-[1964c5fc-58e63918: rpm.org RSA testkey <rsa@rpm.org> public key
+[771b18d3d7baa28734333c424344591e1964c5fc rpm.org RSA testkey <rsa@rpm.org> public key
 ],
 [])
+
+RPMTEST_CHECK([
+runroot rpmkeys --list 4344591e1964c5fc
+],
+[0],
+[771b18d3d7baa28734333c424344591e1964c5fc rpm.org RSA testkey <rsa@rpm.org> public key
+],
+[])
+
 
 RPMTEST_CHECK([
 runroot rpmkeys --list XXX
 ],
 [1],
-[package gpg-pubkey-XXX is not installed
+[Key XXX not found
 ],
 [])
 
@@ -135,7 +144,7 @@ runroot rpmkeys --delete 1964c5fc
 runroot rpmkeys --list
 ],
 [1],
-[package gpg-pubkey is not installed
+[No keys installed
 ],
 [])
 RPMTEST_CLEANUP
