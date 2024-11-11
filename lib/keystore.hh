@@ -14,6 +14,7 @@ public:
     virtual rpmRC load_keys(rpmtxn txn, rpmKeyring keyring) = 0;
     virtual rpmRC import_key(rpmtxn txn, rpmPubkey key, int replace = 1, rpmFlags flags = 0) = 0;
     virtual rpmRC delete_key(rpmtxn txn, rpmPubkey key) = 0;
+    virtual rpmRC delete_store(rpmtxn txn) = 0;
 
     virtual ~keystore() = default;
     keystore(std::string n): name(n) {};
@@ -24,6 +25,7 @@ public:
     virtual rpmRC load_keys(rpmtxn txn, rpmKeyring keyring);
     virtual rpmRC import_key(rpmtxn txn, rpmPubkey key, int replace = 1, rpmFlags flags = 0);
     virtual rpmRC delete_key(rpmtxn txn, rpmPubkey key);
+    virtual rpmRC delete_store(rpmtxn txn);
     keystore_fs(): keystore("fs") {};
 private:
     rpmRC delete_key(rpmtxn txn, const std::string & keyid, const std::string & newname = "");
@@ -34,6 +36,7 @@ public:
     virtual rpmRC load_keys(rpmtxn txn, rpmKeyring keyring);
     virtual rpmRC import_key(rpmtxn txn, rpmPubkey key, int replace = 1, rpmFlags flags = 0);
     virtual rpmRC delete_key(rpmtxn txn, rpmPubkey key);
+    virtual rpmRC delete_store(rpmtxn txn);
     keystore_rpmdb(): keystore("rpmdb") {};
 private:
     rpmRC delete_key(rpmtxn txn, const std::string & keyid, unsigned int newinstance = 0);
@@ -44,6 +47,7 @@ public:
     virtual rpmRC load_keys(rpmtxn txn, rpmKeyring keyring);
     virtual rpmRC import_key(rpmtxn txn, rpmPubkey key, int replace = 1, rpmFlags flags = 0);
     virtual rpmRC delete_key(rpmtxn txn, rpmPubkey key);
+    virtual rpmRC delete_store(rpmtxn txn);
     keystore_openpgp_cert_d(): keystore("openpgp") {};
 };
 
